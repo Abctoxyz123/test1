@@ -88,11 +88,11 @@ document.querySelectorAll(".menu-card").forEach(card => {
   });
 });
 
-// Form gợi ý theo ngân sách
+// // Form gợi ý theo ngân sách
 const form = document.getElementById("menuForm");
 const suggestion = document.getElementById("suggestion");
-
-form.addEventListener("submit", function(e) {
+// Gửi dữ liệu form sang PHP để xử lý và trả về kết quả món ăn thật
+form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   if (!isLoggedIn) {
@@ -100,89 +100,114 @@ form.addEventListener("submit", function(e) {
     return;
   }
 
-  const budgetInput = document.getElementById("budget");
-  const peopleInput = document.getElementById("people");
-  const budget = parseInt(budgetInput.value);
-  const people = parseInt(peopleInput.value);
-  const diet = document.getElementById("diet").value;
+  const formData = new FormData(form);
 
-  let valid = true;
+  try {
+    const response = await fetch("save.php", {
+      method: "POST",
+      body: formData
+    });
 
-  if (isNaN(budget) || budget < 10000) {
-    budgetInput.classList.add("is-invalid");
-    valid = false;
-  } else {
-    budgetInput.classList.remove("is-invalid");
+    const resultHTML = await response.text();
+    document.getElementById("suggestion").innerHTML = resultHTML;
+  } catch (err) {
+    console.error(err);
+    document.getElementById("suggestion").innerHTML =
+      "<h3 class='text-danger'>Lỗi khi kết nối server!</h3>";
   }
-
-  if (isNaN(people) || people <= 0) {
-    peopleInput.classList.add("is-invalid");
-    valid = false;
-  } else {
-    peopleInput.classList.remove("is-invalid");
-  }
-
-  if (!valid) {
-    suggestion.innerHTML = "<h3 class='text-danger'>⚠️ Vui lòng nhập thông tin hợp lệ!</h3>";
-    return;
-  }
-
-  let resultHTML = "<h3 class='text-primary'>🍽️ Gợi ý thực đơn</h3><ul class='list-group mt-3'>";
-  let items = [];
-  switch (diet) {
-    case "TietKiem":
-      items.push("🍚 Cơm + Trứng + Rau (15.000 VNĐ/người)");
-      break;
-    case "Protein":
-      items.push("🥩 Ức gà nướng + Trứng luộc (50.000 VNĐ/người)");
-      break;
-    case "Chay":
-      items.push("🥗 Đậu phụ sốt cà + Rau củ (30.000 VNĐ/người)");
-      break;
-    case "ItDauMo":
-      items.push("🍲 Canh rau cải + Cá hấp (40.000 VNĐ/người)");
-      break;
-  }
-
-  items.forEach(i => {
-    resultHTML += `<li class='list-group-item'>${i}</li>`;
-  });
-
-  resultHTML += "</ul><div class='mt-3'>" +
-    "<button class='btn btn-success me-2' onclick='saveMenuLocal()'>💾 Lưu thực đơn</button>" +
-    "<button class='btn btn-secondary me-2'>⬇️ Tải xuống PDF</button>" +
-    "<button class='btn btn-secondary'>⬇️ Tải xuống Excel</button>" +
-    "</div>";
-
-  suggestion.innerHTML = resultHTML;
-
-  // Lưu thực đơn cuối cùng vào biến toàn cục
-  window.lastSuggested = {
-    diet: diet,
-    budget: budget,
-    people: people,
-    items: items
-  };
 });
 
-// ========================
-// Hàm lưu thực đơn vào localStorage
-// ========================
-function saveMenuLocal() {
-  if (!window.lastSuggested) {
-    alert("❌ Chưa có thực đơn nào để lưu!");
-    return;
-  }
+// form.addEventListener("submit", function(e) {
+//   e.preventDefault();
 
-  const saved = JSON.parse(localStorage.getItem('savedMenus') || '[]');
-  const entry = {
-    id: Date.now(),
-    createdAt: new Date().toLocaleString(),
-    ...window.lastSuggested
-  };
+//   if (!isLoggedIn) {
+//     window.location.href = "login.html";
+//     return;
+//   }
 
-  saved.unshift(entry);
-  localStorage.setItem('savedMenus', JSON.stringify(saved));
+//   const budgetInput = document.getElementById("budget");
+//   const peopleInput = document.getElementById("people");
+//   const budget = parseInt(budgetInput.value);
+//   const people = parseInt(peopleInput.value);
+//   const diet = document.getElementById("diet").value;
 
-  alert("✅ Thực đơn đã được lưu trong trình duyệt!");
-}
+//   let valid = true;
+
+//   if (isNaN(budget) || budget < 10000) {
+//     budgetInput.classList.add("is-invalid");
+//     valid = false;
+//   } else {
+//     budgetInput.classList.remove("is-invalid");
+//   }
+
+//   if (isNaN(people) || people <= 0) {
+//     peopleInput.classList.add("is-invalid");
+//     valid = false;
+//   } else {
+//     peopleInput.classList.remove("is-invalid");
+//   }
+
+//   if (!valid) {
+//     suggestion.innerHTML = "<h3 class='text-danger'>⚠️ Vui lòng nhập thông tin hợp lệ!</h3>";
+//     return;
+//   }
+
+//   let resultHTML = "<h3 class='text-primary'>🍽️ Gợi ý thực đơn</h3><ul class='list-group mt-3'>";
+//   let items = [];
+//   switch (diet) {
+//     case "TietKiem":
+//       items.push("🍚 Cơm + Trứng + Rau (15.000 VNĐ/người)");
+//       break;
+//     case "Protein":
+//       items.push("🥩 Ức gà nướng + Trứng luộc (50.000 VNĐ/người)");
+//       break;
+//     case "Chay":
+//       items.push("🥗 Đậu phụ sốt cà + Rau củ (30.000 VNĐ/người)");
+//       break;
+//     case "ItDauMo":
+//       items.push("🍲 Canh rau cải + Cá hấp (40.000 VNĐ/người)");
+//       break;
+//   }
+
+//   items.forEach(i => {
+//     resultHTML += `<li class='list-group-item'>${i}</li>`;
+//   });
+
+//   resultHTML += "</ul><div class='mt-3'>" +
+//     "<button class='btn btn-success me-2' onclick='saveMenuLocal()'>💾 Lưu thực đơn</button>" +
+//     "<button class='btn btn-secondary me-2'>⬇️ Tải xuống PDF</button>" +
+//     "<button class='btn btn-secondary'>⬇️ Tải xuống Excel</button>" +
+//     "</div>";
+
+//   suggestion.innerHTML = resultHTML;
+
+  // Lưu thực đơn cuối cùng vào biến toàn cục
+  // window.lastSuggested = {
+  //   diet: diet,
+  //   budget: budget,
+  //   people: people,
+  //   items: items
+//   };
+// });
+
+// // ========================
+// // Hàm lưu thực đơn vào localStorage
+// // ========================
+// function saveMenuLocal() {
+//   if (!window.lastSuggested) {
+//     alert("❌ Chưa có thực đơn nào để lưu!");
+//     return;
+//   }
+
+//   const saved = JSON.parse(localStorage.getItem('savedMenus') || '[]');
+//   const entry = {
+//     id: Date.now(),
+//     createdAt: new Date().toLocaleString(),
+//     ...window.lastSuggested
+//   };
+
+//   saved.unshift(entry);
+//   localStorage.setItem('savedMenus', JSON.stringify(saved));
+
+//   alert("✅ Thực đơn đã được lưu trong trình duyệt!");
+// }
